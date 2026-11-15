@@ -3,7 +3,42 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Users,
+  MessageCircle,
+  CalendarDays,
+  UserRound,
+  Sparkles,
+  BriefcaseBusiness,
+  Compass,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+
+type AccentStyle = {
+  icon: string;
+  hover: string;
+  link: string;
+};
+
+const accentStyles: Record<string, AccentStyle> = {
+  blue: {
+    icon: "bg-blue-500/10 text-blue-400",
+    hover: "group-hover:border-blue-500/40",
+    link: "text-blue-400",
+  },
+  violet: {
+    icon: "bg-violet-500/10 text-violet-400",
+    hover: "group-hover:border-violet-500/40",
+    link: "text-violet-400",
+  },
+  emerald: {
+    icon: "bg-emerald-500/10 text-emerald-400",
+    hover: "group-hover:border-emerald-500/40",
+    link: "text-emerald-400",
+  },
+};
 
 async function DashboardContent() {
   await connection();
@@ -27,327 +62,280 @@ async function DashboardContent() {
   }
 
   const fullName = profile?.full_name || "Businessgarh Member";
+  const firstName = fullName.trim().split(" ")[0] || "Member";
+  const initial = fullName.trim().charAt(0).toUpperCase() || "B";
+
+  const features = [
+    {
+      title: "Member Directory",
+      description:
+        "Discover entrepreneurs, professionals and people with shared interests.",
+      href: "/protected/members",
+      icon: Users,
+      label: "Explore members",
+      accent: "blue",
+    },
+    {
+      title: "Community Discussions",
+      description:
+        "Exchange ideas, ask questions and participate in conversations.",
+      href: "/protected/chat",
+      icon: MessageCircle,
+      label: "Join discussions",
+      accent: "violet",
+    },
+    {
+      title: "Community Events",
+      description:
+        "Discover upcoming gatherings and connect with the community.",
+      href: "/protected/events",
+      icon: CalendarDays,
+      label: "Discover events",
+      accent: "emerald",
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-[#080D19] text-white">
+    <main className="min-h-screen bg-[#0B1120] text-white">
+      {/* WELCOME SECTION */}
+      <section className="relative overflow-hidden border-b border-white/[0.07]">
+        <div className="pointer-events-none absolute -right-40 -top-40 h-[450px] w-[450px] rounded-full bg-blue-600/[0.10] blur-[120px]" />
 
-      {/* NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#080D19]/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-10">
+        <div className="pointer-events-none absolute -bottom-40 left-1/4 h-[300px] w-[300px] rounded-full bg-indigo-600/[0.08] blur-[110px]" />
 
-          <Link href="/protected" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
-              <span className="text-xl font-bold">B</span>
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              Businessgarh
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-8 md:flex">
-            <Link href="/protected" className="text-sm text-white transition hover:text-blue-400">
-              Home
-            </Link>
-            <Link href="/protected/members" className="text-sm text-slate-300 transition hover:text-white">
-              Community
-            </Link>
-            <Link href="/protected/chat" className="text-sm text-slate-300 transition hover:text-white">
-              Discussions
-            </Link>
-            <Link href="/protected/events" className="text-sm text-slate-300 transition hover:text-white">
-              Events
-            </Link>
-          </nav>
-
-          <Link
-            href="/protected/profile"
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 transition hover:bg-white/10"
-          >
-            {profile?.avatar_url ? (
-              <img
-                src={profile.avatar_url}
-                alt="Profile"
-                className="h-8 w-8 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 font-bold">
-                {fullName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="hidden text-sm font-medium sm:block">
-              My Profile
-            </span>
-          </Link>
-
-        </div>
-      </header>
-
-      {/* HERO SECTION */}
-      <section className="relative overflow-hidden border-b border-white/10">
-        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]" />
-        <div className="pointer-events-none absolute -bottom-40 left-10 h-80 w-80 rounded-full bg-indigo-600/10 blur-[100px]" />
-
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-20 md:grid-cols-2 md:px-10 md:py-28">
-
-          <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2">
-              <span className="h-2 w-2 rounded-full bg-blue-400" />
-              <span className="text-xs font-semibold tracking-widest text-blue-300">
-                THE BUSINESSGARH NETWORK
-              </span>
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-5 py-16 md:grid-cols-[1.4fr_0.8fr] md:px-10 md:py-24">
+          <div className="flex flex-col justify-center">
+            <div className="mb-7 flex w-fit items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/[0.08] px-4 py-2 text-xs font-semibold tracking-wide text-blue-300">
+              <Sparkles size={14} />
+              YOUR COMMUNITY SPACE
             </div>
 
-            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-              Build connections.
-              <span className="block bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                Create opportunities.
+            <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+              Welcome back,
+              <span className="mt-2 block text-blue-400">
+                {firstName}.
               </span>
-              Grow together.
             </h1>
 
             <p className="mt-6 max-w-xl text-base leading-8 text-slate-400 md:text-lg">
-              A community for ambitious people, entrepreneurs and
-              professionals to connect, collaborate and exchange ideas.
+              Great things happen when people connect. Discover new
+              perspectives, exchange ideas and build meaningful relationships
+              with the Businessgarh community.
             </p>
 
-            <div className="mt-9 flex flex-wrap gap-4">
+            <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 href="/protected/members"
-                className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-500"
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/30 transition hover:bg-blue-500"
               >
-                Explore Community →
+                Explore community
+                <ArrowRight size={17} />
               </Link>
 
               <Link
                 href="/protected/events"
-                className="rounded-lg border border-white/15 bg-white/5 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-6 py-3.5 text-sm font-semibold text-slate-200 transition hover:bg-white/[0.09]"
               >
-                Discover Events
+                View events
+                <ArrowUpRight size={17} />
               </Link>
             </div>
           </div>
 
-          {/* MEMBER WELCOME PANEL */}
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#14213B] to-[#0D1425] p-8 shadow-2xl shadow-blue-950/20">
+          {/* MEMBER CARD */}
+          <div className="relative flex flex-col justify-center">
+            <div className="rounded-2xl border border-white/[0.09] bg-[#111B2D] p-7 shadow-2xl shadow-black/20 sm:p-8">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold tracking-widest text-slate-400">
+                  YOUR MEMBERSHIP
+                </span>
 
-            <div className="flex items-center gap-4">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile photograph"
-                  className="h-16 w-16 rounded-full border-2 border-blue-400/50 object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-bold">
-                  {fullName.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs font-semibold tracking-widest text-blue-300">
-                  MEMBER SPACE
-                </p>
-                <h2 className="mt-1 text-xl font-bold">
-                  Welcome, {fullName}!
-                </h2>
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-400/[0.08] px-3 py-1 text-xs font-medium text-emerald-300">
+                  Active
+                </span>
               </div>
+
+              <div className="mt-8 flex items-center gap-4">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={`${fullName}'s profile`}
+                    className="h-16 w-16 rounded-2xl border border-white/10 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-2xl font-bold text-white">
+                    {initial}
+                  </div>
+                )}
+
+                <div className="min-w-0">
+                  <h2 className="truncate text-xl font-bold text-white">
+                    {fullName}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-400">
+                    Businessgarh Member
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-7 border-t border-white/[0.08]" />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Make your profile stand out
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-slate-400">
+                    Share your background and interests with other members.
+                  </p>
+                </div>
+
+                <Link
+                  href="/protected/profile"
+                  aria-label="Edit your profile"
+                  className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 transition hover:bg-blue-500/20"
+                >
+                  <ArrowUpRight size={19} />
+                </Link>
+              </div>
+
+              <Link
+                href="/protected/profile"
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+              >
+                Manage profile
+                <ArrowRight size={16} />
+              </Link>
             </div>
-
-            <div className="my-7 h-px bg-white/10" />
-
-            <h3 className="text-lg font-semibold">Your journey starts here.</h3>
-
-            <p className="mt-3 text-sm leading-7 text-slate-400">
-              Connect with members, participate in discussions and
-              discover opportunities within the Businessgarh network.
-            </p>
-
-            <Link
-              href="/protected/profile"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-400 transition hover:text-blue-300"
-            >
-              Manage your profile →
-            </Link>
-
           </div>
         </div>
       </section>
 
-      {/* COMMUNITY INTRODUCTION */}
-      <section className="mx-auto max-w-7xl px-5 py-20 md:px-10">
-
-        <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-blue-400">
-              EXPLORE BUSINESSGARH
-            </p>
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              Everything starts with a connection.
-            </h2>
-            <p className="mt-3 max-w-2xl text-slate-400">
-              Discover people, exchange ideas and take part in a growing community.
-            </p>
+      {/* COMMUNITY FEATURES */}
+      <section className="mx-auto max-w-7xl px-5 py-16 md:px-10 md:py-20">
+        <div className="mb-10">
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-blue-400">
+            <Compass size={15} />
+            EXPLORE THE NETWORK
           </div>
+
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            Your community, your opportunities.
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">
+            Everything you need to connect, collaborate and participate in
+            Businessgarh.
+          </p>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            const styles = accentStyles[feature.accent];
 
-          {/* MEMBERS */}
-          <Link
-            href="/protected/members"
-            className="group rounded-2xl border border-white/10 bg-[#111B2D] p-7 transition duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:bg-[#16243A]"
-          >
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 text-2xl text-blue-400">
-              ♙
-            </div>
+            return (
+              <Link
+                key={feature.href}
+                href={feature.href}
+                className={`group rounded-2xl border border-white/[0.08] bg-[#111B2D] p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#152238] ${styles.hover}`}
+              >
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${styles.icon}`}
+                >
+                  <Icon size={23} />
+                </div>
 
-            <h3 className="text-xl font-bold">Member Directory</h3>
+                <h3 className="mt-7 text-lg font-bold text-white">
+                  {feature.title}
+                </h3>
 
-            <p className="mt-3 text-sm leading-7 text-slate-400">
-              Discover professionals, entrepreneurs and people
-              who share your interests.
-            </p>
+                <p className="mt-3 min-h-[72px] text-sm leading-6 text-slate-400">
+                  {feature.description}
+                </p>
 
-            <p className="mt-6 text-sm font-semibold text-blue-400 transition group-hover:text-blue-300">
-              Explore Members →
-            </p>
-          </Link>
+                <div
+                  className={`mt-7 flex items-center gap-2 text-sm font-semibold ${styles.link}`}
+                >
+                  {feature.label}
 
-          {/* CHAT */}
-          <Link
-            href="/protected/chat"
-            className="group rounded-2xl border border-white/10 bg-[#111B2D] p-7 transition duration-300 hover:-translate-y-1 hover:border-indigo-500/50 hover:bg-[#16243A]"
-          >
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/15 text-2xl text-indigo-400">
-              ◈
-            </div>
-
-            <h3 className="text-xl font-bold">Community Discussions</h3>
-
-            <p className="mt-3 text-sm leading-7 text-slate-400">
-              Share your thoughts, discuss ideas and interact
-              with other community members.
-            </p>
-
-            <p className="mt-6 text-sm font-semibold text-indigo-400 transition group-hover:text-indigo-300">
-              Join Discussions →
-            </p>
-          </Link>
-
-          {/* EVENTS */}
-          <Link
-            href="/protected/events"
-            className="group rounded-2xl border border-white/10 bg-[#111B2D] p-7 transition duration-300 hover:-translate-y-1 hover:border-emerald-500/50 hover:bg-[#16243A]"
-          >
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/15 text-2xl text-emerald-400">
-              ◷
-            </div>
-
-            <h3 className="text-xl font-bold">Community Events</h3>
-
-            <p className="mt-3 text-sm leading-7 text-slate-400">
-              Discover upcoming events, meet people and
-              participate in community activities.
-            </p>
-
-            <p className="mt-6 text-sm font-semibold text-emerald-400 transition group-hover:text-emerald-300">
-              Discover Events →
-            </p>
-          </Link>
-
+                  <ArrowRight
+                    size={16}
+                    className="transition group-hover:translate-x-1"
+                  />
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
-      {/* PROFILE ABOUT SECTION */}
-      <section className="border-y border-white/10 bg-[#0C1423]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 md:grid-cols-2 md:px-10">
-
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-blue-400">
+      {/* PROFILE AND INTERESTS */}
+      <section className="border-y border-white/[0.07] bg-[#0D1627]">
+        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-16 md:grid-cols-2 md:px-10 md:py-20">
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-blue-400">
+              <UserRound size={15} />
               YOUR IDENTITY
-            </p>
+            </div>
 
-            <h2 className="mt-3 text-3xl font-bold">
-              Tell the community about yourself.
+            <h2 className="mt-4 max-w-lg text-3xl font-bold leading-tight sm:text-4xl">
+              Let people know what makes you unique.
             </h2>
 
-            <p className="mt-4 leading-7 text-slate-400">
-              Your profile helps other members understand your
-              background, interests and professional journey.
+            <p className="mt-5 max-w-lg text-sm leading-7 text-slate-400">
+              Your profile is your introduction to the community. Add your
+              professional background, interests and a little about yourself
+              so members can get to know you.
             </p>
 
             <Link
               href="/protected/profile"
-              className="mt-6 inline-flex rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold transition hover:bg-blue-500"
+              className="mt-7 inline-flex w-fit items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
-              Edit My Profile →
+              Update my profile
+              <ArrowRight size={16} />
             </Link>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#111B2D] p-7">
-            <h3 className="text-lg font-bold">About Me</h3>
-            <p className="mt-3 leading-7 text-slate-400">
-              {profile?.bio || "Add your professional introduction to help other members know you."}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#111B2D] p-7 sm:p-8">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold">About me</h3>
+              <BriefcaseBusiness size={19} className="text-slate-500" />
+            </div>
+
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              {profile?.bio ||
+                "Your story starts here. Add a short introduction to help other members understand your background and professional journey."}
             </p>
 
-            <div className="my-6 h-px bg-white/10" />
+            <div className="my-7 border-t border-white/[0.08]" />
 
-            <h3 className="font-bold">My Interests</h3>
+            <h3 className="text-sm font-semibold text-white">
+              My interests
+            </h3>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {profile?.interests?.length ? (
                 profile.interests.map((interest: string) => (
                   <span
                     key={interest}
-                    className="rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-sm text-blue-300"
+                    className="rounded-lg border border-blue-400/15 bg-blue-500/[0.08] px-3 py-2 text-xs font-medium text-blue-300"
                   >
                     {interest}
                   </span>
                 ))
               ) : (
                 <p className="text-sm text-slate-500">
-                  No interests added yet.
+                  No interests added yet. Update your profile to add some.
                 </p>
               )}
             </div>
           </div>
-
         </div>
       </section>
-
-      {/* FOOTER */}
-      <footer className="bg-[#050914]">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 px-5 py-8 md:flex-row md:items-center md:px-10">
-
-          <div>
-            <h3 className="text-lg font-bold">Businessgarh</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Connect. Collaborate. Grow.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-6 text-sm text-slate-400">
-            <Link href="/protected/members" className="transition hover:text-white">
-              Community
-            </Link>
-            <Link href="/protected/chat" className="transition hover:text-white">
-              Discussions
-            </Link>
-            <Link href="/protected/events" className="transition hover:text-white">
-              Events
-            </Link>
-            <Link href="/protected/profile" className="transition hover:text-white">
-              Profile
-            </Link>
-          </div>
-
-          <p className="text-xs text-slate-600">
-            © 2026 Businessgarh
-          </p>
-
-        </div>
-      </footer>
-
     </main>
   );
 }
@@ -356,7 +344,7 @@ export default function ProtectedPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#080D19] text-slate-300">
+        <div className="flex min-h-[70vh] items-center justify-center bg-[#0B1120] text-sm text-slate-400">
           Loading Businessgarh...
         </div>
       }

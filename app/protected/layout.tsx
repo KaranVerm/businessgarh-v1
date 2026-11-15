@@ -1,15 +1,89 @@
 
-import Link from "next/link";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
+
+import { createClient } from "@/lib/supabase/server";
+import { ProtectedNavigation } from "@/components/protected-navigation";
 import { AuthButton } from "@/components/auth-button";
 
-const navigation = [
-  { name: "Dashboard", href: "/protected" },
-  { name: "Members", href: "/protected/members" },
-  { name: "Community Chat", href: "/protected/chat" },
-  { name: "Events", href: "/protected/events" },
-  { name: "My Profile", href: "/protected/profile" },
-];
+async function ProtectedContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await connection();
+
+  const supabase = await createClient();
+
+  const {
+    data,
+    error: claimsError,
+  } = await supabase.auth.getClaims();
+
+  const userId = data?.claims?.sub;
+
+  if (claimsError || !userId) {
+    redirect("/auth/login");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("is_suspended")
+    .eq("id", userId)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error("Unable to verify your account status. Please try again.");
+  }
+
+  if (profile.is_suspended) {
+    redirect("/auth/suspended");
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0B1120] text-white">
+      <Suspense
+        fallback={
+          <header className="h-[72px] border-b border-white/[0.08] bg-[#0B1120]" />
+        }
+      >
+        <ProtectedNavigation
+          account={
+            <Suspense
+              fallback={
+                <div className="h-9 w-20 animate-pulse rounded-lg bg-white/10" />
+              }
+            >
+              <AuthButton />
+            </Suspense>
+          }
+        />
+      </Suspense>
+
+      <div className="min-h-[calc(100vh-140px)]">
+        {children}
+      </div>
+
+      <footer className="border-t border-white/[0.08] bg-[#080D19] px-5 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
+          <div>
+            <p className="font-semibold">
+              Business<span className="text-blue-400">garh</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Connect. Collaborate. Grow.
+            </p>
+          </div>
+
+          <p className="text-xs text-slate-500">
+            © 2026 Businessgarh. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
 export default function ProtectedLayout({
   children,
@@ -17,51 +91,12 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-
-      {/* SHARED NAVIGATION */}
-      <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-
-          {/* LOGO */}
-          <Link
-            href="/protected"
-            className="text-xl font-bold tracking-tight text-white"
-          >
-            Business<span className="text-blue-500">garh</span>
-          </Link>
-
-          {/* NAVIGATION LINKS */}
-          <nav className="flex flex-wrap items-center gap-2">
-            {navigation.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-blue-600 hover:text-white"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-
-          {/* ACCOUNT */}
-          <Suspense fallback={<div className="h-9 w-20" />}>
-            <AuthButton />
-          </Suspense>
-
-        </div>
-      </header>
-
-      {/* PAGE CONTENT */}
-      <div className="min-h-[calc(100vh-140px)]">
-        {children}
-      </div>
-
-      {/* FOOTER */}
-      <footer className="border-t border-slate-800 px-5 py-6 text-center text-xs text-slate-500">
-        © 2026 Businessgarh. All rights reserved.
-      </footer>
-
-    </main>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0B1120]" />
+      }
+    >
+      <ProtectedContent>{children}</ProtectedContent>
+    </Suspense>
   );
 }

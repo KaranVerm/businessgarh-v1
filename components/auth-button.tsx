@@ -1,29 +1,63 @@
-import Link from "next/link";
-import { Button } from "./ui/button";
-import { createClient } from "@/lib/supabase/server";
-import { LogoutButton } from "./logout-button";
 
-export async function AuthButton() {
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { connection } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+
+async function signOutAction() {
+  "use server";
+
   const supabase = await createClient();
 
-  // You can also use getUser() which will be slower.
-  const { data } = await supabase.auth.getClaims();
+  await supabase.auth.signOut();
 
-  const user = data?.claims;
+  redirect("/auth/login");
+}
 
-  return user ? (
+export async function AuthButton() {
+  // Wait for the incoming request before reading authentication data.
+  await connection();
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.getClaims();
+
+  const isLoggedIn = !error && !!data?.claims;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex items-center gap-3">
+        <Link
+          href="/auth/login"
+          className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 transition hover:text-white"
+        >
+          Login
+        </Link>
+
+        <Link
+          href="/auth/sign-up"
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+        >
+          Sign up
+        </Link>
+      </div>
+    );
+  }
+
+  return (
     <div className="flex items-center gap-4">
-      Hey, {user.email}!
-      <LogoutButton />
-    </div>
-  ) : (
-    <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
-        <Link href="/auth/login">Sign in</Link>
-      </Button>
-      <Button asChild size="sm" variant={"default"}>
-        <Link href="/auth/sign-up">Sign up</Link>
-      </Button>
+      <span className="hidden text-sm text-slate-300 sm:inline">
+        Welcome back
+      </span>
+
+      <form action={signOutAction}>
+        <button
+          type="submit"
+          className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-white/20 hover:bg-white/10"
+        >
+          Logout
+        </button>
+      </form>
     </div>
   );
 }
