@@ -16,7 +16,6 @@ async function verifyAdmin() {
     error: claimsError,
   } = await supabase.auth.getClaims();
 
-  // Correct: claims are nested inside data.claims
   const userId = data?.claims?.sub;
 
   if (claimsError || !userId) {
@@ -40,6 +39,7 @@ async function verifyAdmin() {
   };
 }
 
+// SUSPEND MEMBER
 export async function suspendMember(
   memberId: string,
   reason: string
@@ -50,11 +50,10 @@ export async function suspendMember(
 
   const suspensionReason = reason?.trim();
 
-  if (
-    !suspensionReason ||
-    suspensionReason.length > 500
-  ) {
-    throw new Error("Enter a valid suspension reason (maximum 500 characters).");
+  if (!suspensionReason || suspensionReason.length > 500) {
+    throw new Error(
+      "Enter a valid suspension reason (maximum 500 characters)."
+    );
   }
 
   const { supabase, admin, adminId } = await verifyAdmin();
@@ -87,7 +86,9 @@ export async function suspendMember(
   );
 
   if (banError) {
-    throw new Error(`Account suspension failed: ${banError.message}`);
+    throw new Error(
+      `Account suspension failed: ${banError.message}`
+    );
   }
 
   const { error: updateError } = await admin
@@ -104,7 +105,9 @@ export async function suspendMember(
       ban_duration: "none",
     });
 
-    throw new Error(`Profile update failed: ${updateError.message}`);
+    throw new Error(
+      `Profile update failed: ${updateError.message}`
+    );
   }
 
   revalidatePath("/protected/admin");
@@ -116,6 +119,7 @@ export async function suspendMember(
   };
 }
 
+// REACTIVATE MEMBER
 export async function reactivateMember(memberId: string) {
   if (!memberId) {
     throw new Error("Member ID is required.");
@@ -124,7 +128,9 @@ export async function reactivateMember(memberId: string) {
   const { supabase, admin, adminId } = await verifyAdmin();
 
   if (memberId === adminId) {
-    throw new Error("You cannot reactivate your own account through this action.");
+    throw new Error(
+      "You cannot reactivate your own account through this action."
+    );
   }
 
   const { data: member, error: memberError } = await supabase
@@ -138,7 +144,9 @@ export async function reactivateMember(memberId: string) {
   }
 
   if (member.role === "admin") {
-    throw new Error("This action cannot be used on an admin account.");
+    throw new Error(
+      "This action cannot be used on an admin account."
+    );
   }
 
   if (!member.is_suspended) {
@@ -151,7 +159,9 @@ export async function reactivateMember(memberId: string) {
   );
 
   if (unbanError) {
-    throw new Error(`Account reactivation failed: ${unbanError.message}`);
+    throw new Error(
+      `Account reactivation failed: ${unbanError.message}`
+    );
   }
 
   const { error: updateError } = await admin
@@ -164,7 +174,9 @@ export async function reactivateMember(memberId: string) {
     .eq("id", memberId);
 
   if (updateError) {
-    throw new Error(`Profile update failed: ${updateError.message}`);
+    throw new Error(
+      `Profile update failed: ${updateError.message}`
+    );
   }
 
   revalidatePath("/protected/admin");
@@ -173,5 +185,135 @@ export async function reactivateMember(memberId: string) {
   return {
     success: true,
     message: "Member reactivated successfully.",
+  };
+}
+
+// PERMANENTLY DELETE MEMBER
+export async function deleteMember(
+  memberId: string,
+  confirmationName: string
+) {
+  if (!memberId || !confirmationName?.trim()) {
+    throw new Error(
+      "Member ID and confirmation name are required."
+    );
+  }
+
+  const { supabase, admin, adminId } = await verifyAdmin();
+
+  // Prevent self-deletion.
+  if (memberId === adminId) {
+    throw new Error("You cannot delete your own account.");
+  }
+
+  // Verify the target member using the authenticated admin session.
+  const { data: member, error: memberError } = await supabase
+    .from("profiles")
+    .select("id, full_name, role")
+    .eq("id", memberId)
+    .single();
+
+  if (memberError || !member) {
+    throw new Error("Member not found.");
+  }
+
+  // Never delete an administrator through this action.
+  if (member.role !== "member") {
+    throw new Error(
+      "Only regular member accounts can be deleted here."
+    );
+  }
+
+  // Verify the typed confirmation name.
+  if (
+    !member.full_name ||
+    member.full_name.trim().toLowerCase() !==
+      confirmationName.trim().toLowerCase()
+  ) {
+    throw new Error("The confirmation name does not match.");
+  }
+
+  // Permanently delete the Auth account.
+  // Your verified database foreign keys cascade to the profile,
+  // messages, hosted events and event RSVPs.
+  const { error: deleteError } =
+    await admin.auth.admin.deleteUser(memberId);
+
+  if (deleteError) {
+    throw new Error(
+      `Member deletion failed: ${deleteError.message}`
+    );
+  }
+
+  // Auth deletion has succeeded. Now clean up this member's
+  // files from their own UUID folder in the avatars bucket.
+  let avatarWarning: string | null = null;
+
+  const avatarPaths: string[] = [];
+  const pageSize = 100;
+
+  try {
+    let offset = 0;
+
+    while (true) {
+      const { data: files, error: listError } =
+        await admin.storage
+          .from("avatars")
+          .list(memberId, {
+            limit: pageSize,
+            offset,
+          });
+
+      if (listError) {
+        throw listError;
+      }
+
+      const page = files ?? [];
+
+      for (const file of page) {
+        // Only include actual files, not nested folders.
+        if (file.name && file.id) {
+          avatarPaths.push(`${memberId}/${file.name}`);
+        }
+      }
+
+      if (page.length < pageSize) {
+        break;
+      }
+
+      offset += pageSize;
+    }
+
+    if (avatarPaths.length > 0) {
+      const { error: storageError } = await admin.storage
+        .from("avatars")
+        .remove(avatarPaths);
+
+      if (storageError) {
+        throw storageError;
+      }
+    }
+  } catch (error) {
+    avatarWarning =
+      error instanceof Error
+        ? error.message
+        : "Unknown avatar cleanup error.";
+  }
+
+  revalidatePath("/protected/admin");
+  revalidatePath("/protected/admin/members");
+
+  if (avatarWarning) {
+    return {
+      success: true,
+      message:
+        "Member account deleted, but avatar cleanup needs attention: " +
+        avatarWarning,
+    };
+  }
+
+  return {
+    success: true,
+    message: "Member account and avatar files deleted successfully.",
   };
 }
